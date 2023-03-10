@@ -13,6 +13,7 @@ from dagster._core.definitions.utils import DEFAULT_IO_MANAGER_KEY
 from dagster._core.execution.build_resources import build_resources, get_mapped_resource_config
 from dagster._core.execution.context.input import build_input_context
 from dagster._core.execution.context.output import build_output_context
+from dagster._core.execution.resources_init import get_transitive_required_resource_keys
 from dagster._core.instance import DagsterInstance
 from dagster._core.instance.config import is_dagster_home_set
 from dagster._core.types.dagster_type import resolve_dagster_type
@@ -98,7 +99,10 @@ class AssetValueLoader:
         )
         io_manager_key = assets_def.get_io_manager_key_for_asset_key(asset_key)
         io_manager_def = resource_defs[io_manager_key]
-        required_resource_keys = io_manager_def.required_resource_keys | {io_manager_key}
+        get_transitive_required_resource_keys(io_manager_def.required_resource_keys, resource_defs)
+        required_resource_keys = get_transitive_required_resource_keys(
+            io_manager_def.required_resource_keys, resource_defs
+        ) | {io_manager_key}
 
         self._ensure_resource_instances_in_cache(
             {k: v for k, v in resource_defs.items() if k in required_resource_keys},
